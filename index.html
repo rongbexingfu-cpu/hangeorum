@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한 걸음 — 내가 만드는 동기 보드</title>
+<meta name="theme-color" content="#F5F7F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141715" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="한 걸음">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='88'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --ground:#F5F7F4; --surface:#FFFFFF; --ink:#20241F; --muted:#667069;
+  --hairline:#E3E8E2; --accent:#0E8A6D; --accent-deep:#0B6E57; --accent-soft:#E3F3EC;
+  --reward:#B36F00; --reward-strong:#E8930C; --reward-soft:#FBEED3;
+  --on-accent:#FFFFFF;
+  --card-shadow:0 1px 2px rgba(32,36,31,.05);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#141715; --surface:#1D211E; --ink:#E9EDE9; --muted:#99A39B;
+    --hairline:#2C322D; --accent:#3DBD97; --accent-deep:#5ECFAC; --accent-soft:#1B3A2E;
+    --reward:#F2B04E; --reward-strong:#F2B04E; --reward-soft:#3A2C12;
+    --on-accent:#10231C;
+    --card-shadow:none;
+  }
+}
+:root[data-theme="light"]{
+  --ground:#F5F7F4; --surface:#FFFFFF; --ink:#20241F; --muted:#667069;
+  --hairline:#E3E8E2; --accent:#0E8A6D; --accent-deep:#0B6E57; --accent-soft:#E3F3EC;
+  --reward:#B36F00; --reward-strong:#E8930C; --reward-soft:#FBEED3;
+  --on-accent:#FFFFFF;
+  --card-shadow:0 1px 2px rgba(32,36,31,.05);
+}
+:root[data-theme="dark"]{
+  --ground:#141715; --surface:#1D211E; --ink:#E9EDE9; --muted:#99A39B;
+  --hairline:#2C322D; --accent:#3DBD97; --accent-deep:#5ECFAC; --accent-soft:#1B3A2E;
+  --reward:#F2B04E; --reward-strong:#F2B04E; --reward-soft:#3A2C12;
+  --on-accent:#10231C;
+  --card-shadow:none;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{background:var(--ground);}
+body{
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  background:var(--ground); color:var(--ink);
+  line-height:1.6; font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:560px; margin:0 auto; padding:20px 16px 80px;}
+header.top{display:flex; align-items:baseline; justify-content:space-between; padding:6px 4px 14px;}
+.brand{font-size:19px; font-weight:700; letter-spacing:-.01em;}
+.brand small{font-size:12px; font-weight:400; color:var(--muted); margin-left:8px; letter-spacing:0;}
+.dateline{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;}
+nav.tabs{display:flex; gap:4px; background:var(--surface); border:1px solid var(--hairline); border-radius:12px; padding:4px; margin-bottom:16px;}
+nav.tabs button{
+  flex:1; border:0; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:500;
+  padding:8px 0; border-radius:9px; cursor:pointer;
+}
+nav.tabs button[aria-selected="true"]{background:var(--accent-soft); color:var(--accent-deep); font-weight:700;}
+h2.sec{font-size:13px; font-weight:700; color:var(--muted); letter-spacing:.06em; margin:22px 4px 8px;}
+.card{background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; box-shadow:var(--card-shadow); margin-bottom:10px;}
+.card.pick{cursor:pointer; transition:border-color .15s;}
+.card.pick:hover{border-color:var(--accent);}
+.tt{font-size:16px; font-weight:700; letter-spacing:-.01em; overflow-wrap:anywhere;}
+.sub{font-size:13px; color:var(--muted); margin-top:2px; overflow-wrap:anywhere;}
+.step-line{font-size:14px; margin-top:8px; padding:8px 10px; background:var(--accent-soft); color:var(--accent-deep); border-radius:9px; font-weight:500;}
+.chip{display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:99px; vertical-align:2px;}
+.chip.prio{background:var(--ground); color:var(--muted); border:1px solid var(--hairline);}
+.chip.prio.A{background:var(--accent-soft); color:var(--accent-deep); border-color:transparent;}
+.chip.rw{background:var(--reward-soft); color:var(--reward); border:0;}
+.row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.btn{
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; white-space:nowrap;
+  background:var(--surface); color:var(--ink); border:1px solid var(--hairline);
+  padding:9px 14px; border-radius:11px; transition:background .12s;
+}
+.btn:hover{background:var(--ground);}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+.btn.primary:hover{background:var(--accent-deep); border-color:var(--accent-deep);}
+.btn.ghost{border-color:transparent; background:transparent; color:var(--muted);}
+.btn.ghost:hover{background:var(--surface);}
+.btn.sm{padding:6px 11px; font-size:12.5px; border-radius:9px;}
+.btn.reward{background:var(--reward-soft); border-color:transparent; color:var(--reward);}
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+input[type=text], textarea, select{
+  font:inherit; font-size:14px; width:100%; color:var(--ink);
+  background:var(--ground); border:1px solid var(--hairline); border-radius:10px; padding:10px 12px;
+}
+input[type=text]::placeholder, textarea::placeholder{color:var(--muted); opacity:.8;}
+label.fl{display:block; font-size:12px; font-weight:600; color:var(--muted); margin:12px 0 4px;}
+.capture{display:flex; gap:8px; margin-bottom:14px;}
+.capture input{background:var(--surface); padding:12px 14px; font-size:15px;}
+.tmpl{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
+.tmpl button{font:inherit; font-size:12px; background:var(--ground); border:1px solid var(--hairline); color:var(--muted); border-radius:99px; padding:4px 11px; cursor:pointer;}
+.tmpl button:hover{color:var(--ink);}
+.empty{color:var(--muted); font-size:13.5px; text-align:center; padding:26px 12px;}
+.notice{background:var(--accent-soft); color:var(--accent-deep); border-radius:var(--radius); padding:14px 16px; font-size:13.5px; margin-bottom:12px;}
+.notice .btn{margin-top:10px;}
+.soft-suggest{background:var(--ground); border-radius:10px; padding:10px 12px; font-size:13px; color:var(--muted); margin-top:10px;}
+.focus-card{padding:26px 20px; text-align:center;}
+.focus-card .cue{font-size:13px; color:var(--muted);}
+.focus-card .tt{font-size:20px; margin:6px 0 2px;}
+.focus-card .first{font-size:16px; font-weight:600; color:var(--accent-deep); background:var(--accent-soft); display:inline-block; padding:8px 16px; border-radius:11px; margin:12px 0 4px;}
+.focus-card .resume{font-size:15px; background:var(--reward-soft); color:var(--reward); font-weight:600; padding:10px 16px; border-radius:11px; margin:10px 0 2px;}
+.timerbox{margin:18px auto 6px; width:170px;}
+.timerbox svg{display:block;}
+.timernum{font-variant-numeric:tabular-nums; font-family:ui-monospace,"SF Mono",Menlo,monospace;}
+.tchips{display:flex; gap:6px; justify-content:center; margin:10px 0 4px; flex-wrap:wrap;}
+.tchips button{font:inherit; font-size:12.5px; font-weight:600; background:var(--ground); border:1px solid var(--hairline); color:var(--muted); border-radius:99px; padding:5px 13px; cursor:pointer;}
+.tchips button.on{background:var(--accent-soft); color:var(--accent-deep); border-color:transparent;}
+.ledger-item{display:flex; justify-content:space-between; gap:10px; padding:11px 4px; border-bottom:1px solid var(--hairline); font-size:13.5px;}
+.ledger-item:last-child{border-bottom:0;}
+.ledger-item .when{color:var(--muted); font-size:12px; white-space:nowrap; font-variant-numeric:tabular-nums;}
+.stat-row{display:flex; gap:10px; margin-bottom:10px;}
+.stat{flex:1; background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius); padding:14px; text-align:center;}
+.stat b{display:block; font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+.stat span{font-size:12px; color:var(--muted);}
+.sheet-bg{position:fixed; inset:0; background:rgba(15,18,16,.45); display:flex; align-items:flex-end; justify-content:center; z-index:50;}
+@media(min-width:560px){.sheet-bg{align-items:center;}}
+.sheet{background:var(--surface); border-radius:20px 20px 0 0; width:100%; max-width:560px; padding:26px 22px 34px; text-align:center;}
+@media(min-width:560px){.sheet{border-radius:20px; padding-bottom:26px;}}
+.sheet .bigcheck{width:64px; height:64px; margin:0 auto 12px; border-radius:50%; background:var(--accent-soft); display:flex; align-items:center; justify-content:center;}
+.sheet .bigcheck svg{width:32px; height:32px; stroke:var(--accent-deep);}
+.sheet h3{font-size:19px; font-weight:700; margin-bottom:4px;}
+.sheet .fact{font-size:13.5px; color:var(--muted); margin:4px 0;}
+.reward-card{margin:16px auto 4px; background:var(--reward-soft); border-radius:14px; padding:16px; max-width:320px;}
+.reward-card .rn{font-size:16px; font-weight:700; color:var(--reward);}
+.reward-card .rs{font-size:12px; color:var(--reward); opacity:.85;}
+details.edit{margin-top:12px; border-top:1px dashed var(--hairline); padding-top:4px;}
+details.edit summary{font-size:12.5px; color:var(--muted); cursor:pointer; padding:6px 0; list-style:none;}
+details.edit summary::-webkit-details-marker{display:none;}
+details.edit summary::after{content:" ↓"; font-size:11px;}
+details.edit[open] summary::after{content:" ↑";}
+.steps li{display:flex; gap:8px; align-items:center; padding:5px 0; font-size:13.5px; list-style:none;}
+.steps li.done{color:var(--muted); text-decoration:line-through;}
+.evi-card{background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; margin-bottom:10px;}
+.evi-card h4{font-size:14.5px; font-weight:700; margin-bottom:4px;}
+.evi-card p{font-size:13px; color:var(--muted); margin-bottom:6px;}
+.evi-card .cite{font-size:12px; color:var(--muted); background:var(--ground); border-radius:8px; padding:7px 10px; margin-top:4px;}
+.evi-card .lvl{display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.04em; padding:1px 7px; border-radius:99px; background:var(--accent-soft); color:var(--accent-deep); margin-right:6px;}
+.evi-card .lvl.gray{background:var(--ground); color:var(--muted); border:1px solid var(--hairline);}
+footer.foot{margin-top:34px; text-align:center; font-size:12px; color:var(--muted); line-height:1.8;}
+footer.foot a{color:var(--muted);}
+.toggle-row{display:flex; justify-content:space-between; align-items:center; padding:10px 2px; border-bottom:1px solid var(--hairline); font-size:14px;}
+.toggle-row:last-child{border-bottom:0;}
+.switch{position:relative; width:42px; height:24px; flex:none;}
+.switch input{opacity:0; width:100%; height:100%; position:absolute; cursor:pointer; z-index:2;}
+.switch .knob{position:absolute; inset:0; background:var(--hairline); border-radius:99px; transition:background .15s;}
+.switch .knob::after{content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:var(--surface); transition:left .15s; box-shadow:0 1px 2px rgba(0,0,0,.15);}
+.switch input:checked + .knob{background:var(--accent);}
+.switch input:checked + .knob::after{left:21px;}
+canvas#confetti{position:fixed; inset:0; pointer-events:none; z-index:60;}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001s!important; transition-duration:.001s!important;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">한 걸음<small>내가 만드는 동기 보드</small></div>
+    <div class="dateline" id="dateline"></div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="보드 화면">
+    <button role="tab" data-view="now" aria-selected="true">지금</button>
+    <button role="tab" data-view="tasks" aria-selected="false">할 일</button>
+    <button role="tab" data-view="log" aria-selected="false">기록</button>
+    <button role="tab" data-view="rewards" aria-selected="false">보상</button>
+  </nav>
+  <main id="app"></main>
+  <footer class="foot">
+    이 보드는 검증된 행동치료 기법을 옮긴 도구예요. 치료는 아니에요.<br>
+    <a href="#" id="evi-link">왜 이렇게 생겼나요? — 설계 근거 보기</a> ·
+    <a href="#" id="export-link">내 데이터 내려받기</a>
+  </footer>
+</div>
+<div id="sheet-root"></div>
+<canvas id="confetti" width="0" height="0" aria-hidden="true"></canvas>
+
+<script>
+"use strict";
+/* ---------- state ---------- */
+const KEY = "hangeorum-board-v1";
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const uid = () => Math.random().toString(36).slice(2, 9);
+const now = () => Date.now();
+const DAY = 86400000;
+
+const seed = () => ({
+  tasks: [{
+    id: uid(), title: "이 보드에 오늘 할 일 하나 적기", why: "",
+    prio: "A", firstStep: "위 입력창에 한 줄만 적기", cue: "이 화면을 연 지금",
+    rewardId: null, dread: false, steps: [], postponed: 0, today: true,
+    status: "open", createdAt: now(), estMin: 5, resumePlan: "", obstacle: ""
+  }],
+  rewards: [
+    { id: uid(), name: "따뜻한 커피 한 잔", size: "작음" },
+    { id: uid(), name: "좋아하는 영상 한 편", size: "큼" }
+  ],
+  claims: [],            // {ts, rewardName, taskTitle}
+  ledger: [],            // {ts, type, title, estMin, actualMin}
+  reviews: [],           // {ts, feel, tools[], nextA}
+  flags: { timer: true, reward: true, review: true },
+  timer: null,           // {taskId, startTs, min, pausedAt}
+  lastVisit: now()
+});
+
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+let view = "now";
+let tickHandle = null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ---------- re-entry (원칙 10) ---------- */
+const awayDays = Math.floor((now() - (S.lastVisit || now())) / DAY);
+let showReentry = awayDays >= 3 && S.tasks.some(t => t.today && t.status !== "done");
+S.lastVisit = now(); save();
+
+/* ---------- helpers ---------- */
+const task = id => S.tasks.find(t => t.id === id);
+const rewardOf = t => t && t.rewardId ? S.rewards.find(r => r.id === t.rewardId) : null;
+const nextStep = t => (t.steps || []).find(s => !s.done);
+const doing = () => S.tasks.find(t => t.status === "doing");
+const fmtTime = ts => { const d = new Date(ts); return (d.getMonth() + 1) + "/" + d.getDate() + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+const weekStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+const thisWeek = arr => arr.filter(e => e.ts >= weekStart());
+const led = (type, t, extra) => { S.ledger.unshift(Object.assign({ ts: now(), type: type, title: t ? t.title : "" }, extra || {})); };
+
+/* ---------- confetti (reduced-motion이면 생략) ---------- */
+function confetti() {
+  if (RM) return;
+  const cv = $("#confetti"), ctx = cv.getContext("2d");
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#0E8A6D", "#E8930C", "#7FCBB3", "#F2B04E"];
+  const ps = Array.from({ length: 70 }, () => ({
+    x: innerWidth / 2 + (Math.random() - .5) * 160, y: innerHeight * .42,
+    vx: (Math.random() - .5) * 7, vy: -Math.random() * 8 - 3,
+    s: Math.random() * 6 + 3, c: cols[Math.floor(Math.random() * cols.length)], r: Math.random() * 6.3
+  }));
+  let n = 0;
+  (function fr() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .28; p.r += .1;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .6); ctx.restore(); });
+    if (++n < 70) requestAnimationFrame(fr); else ctx.clearRect(0, 0, cv.width, cv.height);
+  })();
+}
+
+/* ---------- actions ---------- */
+const A = {
+  switchView(v) { view = v; render(); },
+  quickAdd(inputId) {
+    const el = document.getElementById(inputId); const v = el.value.trim(); if (!v) return;
+    S.tasks.unshift({ id: uid(), title: v, why: "", prio: "B", firstStep: "", cue: "", rewardId: null, dread: false, steps: [], postponed: 0, today: view === "now", status: "open", createdAt: now(), estMin: 45, resumePlan: "", obstacle: "" });
+    save(); render();
+    const t = S.tasks[0];
+    const card = document.querySelector('[data-card="' + t.id + '"] details');
+    if (card) card.open = true;
+  },
+  start(id) {
+    const cur = doing(); if (cur && cur.id !== id) { cur.status = "open"; }
+    const t = task(id); t.status = "doing"; t.today = true; t.startedAt = now();
+    S.timer = S.flags.timer ? { taskId: id, startTs: now(), min: t.estMin || 45 } : null;
+    led("start", t);
+    save(); view = "now"; render();
+  },
+  pickRandom() {
+    const pool = todayPool(); if (!pool.length) return;
+    A.start(pool[Math.floor(Math.random() * pool.length)].id);
+  },
+  setTimerMin(min) { if (S.timer) { S.timer.min = min; S.timer.startTs = now(); } const t = doing(); if (t) t.estMin = min; save(); render(); },
+  extendTimer() { if (S.timer) { S.timer.min += 15; } save(); render(); },
+  putDown(id) { // 내려놓기 — 벌점 없음
+    const t = task(id); t.status = "open"; S.timer = null;
+    led("pause", t); save(); render();
+  },
+  saveResume(id) {
+    const t = task(id); const el = $("#resume-input"); if (el) t.resumePlan = el.value.trim();
+    save(); render();
+  },
+  complete(id) {
+    const t = task(id); if (!t) return;
+    const actual = t.startedAt ? Math.max(1, Math.round((now() - t.startedAt) / 60000)) : null;
+    t.status = "done"; t.doneAt = now(); t.today = false;
+    led("done", t, { estMin: t.estMin, actualMin: actual });
+    S.timer = null; save();
+    openDoneSheet(t, actual); confetti(); render();
+  },
+  claimReward(taskId) {
+    const t = task(taskId); const r = rewardOf(t); if (!r) return;
+    S.claims.unshift({ ts: now(), rewardName: r.name, taskTitle: t.title });
+    save(); closeSheet(); render();
+  },
+  postpone(id) {
+    const t = task(id); t.today = false; t.postponed = (t.postponed || 0) + 1;
+    save(); render();
+  },
+  toToday(id) { const t = task(id); t.today = true; save(); render(); },
+  setPrio(id, p) { task(id).prio = p; save(); render(); },
+  del(id) { S.tasks = S.tasks.filter(t => t.id !== id); if (S.timer && S.timer.taskId === id) S.timer = null; save(); render(); },
+  saveEdit(id) {
+    const t = task(id); const g = n => { const el = document.getElementById(n + "-" + id); return el ? el.value.trim() : ""; };
+    t.title = g("f-title") || t.title; t.firstStep = g("f-first"); t.cue = g("f-cue");
+    t.why = g("f-why"); t.obstacle = g("f-obs"); t.resumePlan = g("f-resume");
+    const rw = document.getElementById("f-rw-" + id); if (rw) t.rewardId = rw.value || null;
+    const dr = document.getElementById("f-dread-" + id); if (dr) t.dread = dr.checked;
+    save(); render();
+  },
+  setCue(id, text) { const el = document.getElementById("f-cue-" + id); if (el) el.value = text; },
+  addStep(id) {
+    const el = document.getElementById("step-in-" + id); const v = el.value.trim(); if (!v) return;
+    task(id).steps.push({ text: v, done: false }); save(); render();
+    const d = document.querySelector('[data-card="' + id + '"] details'); if (d) d.open = true;
+  },
+  toggleStep(id, i) { const t = task(id); t.steps[i].done = !t.steps[i].done; save(); render(); },
+  shrinkFirst(id) { // "첫 걸음만 줄여볼까요" — 쪼개기 에디터 열기
+    const d = document.querySelector('[data-card="' + id + '"] details'); if (d) { d.open = true; d.scrollIntoView({ behavior: RM ? "auto" : "smooth", block: "center" }); }
+    const el = document.getElementById("f-first-" + id); if (el) el.focus();
+  },
+  addReward() {
+    const el = $("#rw-name"); const v = el.value.trim(); if (!v) return;
+    S.rewards.push({ id: uid(), name: v, size: $("#rw-size").value }); el.value = ""; save(); render();
+  },
+  delReward(id) { S.rewards = S.rewards.filter(r => r.id !== id); S.tasks.forEach(t => { if (t.rewardId === id) t.rewardId = null; }); save(); render(); },
+  reentryReset() {
+    S.tasks.forEach(t => { if (t.status !== "done") { t.today = false; if (t.status === "doing") t.status = "open"; } });
+    S.timer = null; led("reset", null); showReentry = false; save(); render();
+  },
+  dismissReentry() { showReentry = false; render(); },
+  saveReview() {
+    const feel = (document.querySelector('input[name="rv-feel"]:checked') || {}).value || null;
+    const tools = Array.from(document.querySelectorAll('input[name="rv-tool"]:checked')).map(e => e.value);
+    const nextA = $("#rv-next") ? $("#rv-next").value : "";
+    S.reviews.unshift({ ts: now(), feel: feel, tools: tools, nextA: nextA });
+    if (nextA) { const t = task(nextA); if (t) { t.prio = "A"; t.today = true; } }
+    save(); render();
+  },
+  setFlag(name, v) { S.flags[name] = v; if (name === "timer" && !v) S.timer = null; save(); render(); },
+  copyWeek() {
+    const st = thisWeek(S.ledger.filter(e => e.type === "start")).length;
+    const dn = thisWeek(S.ledger.filter(e => e.type === "done")).length;
+    const txt = "이번 주: " + st + "번 시작, " + dn + "개 완료 — 한 걸음 보드";
+    if (navigator.clipboard) navigator.clipboard.writeText(txt);
+    const el = $("#copy-note"); if (el) el.textContent = "복사했어요. 원하는 사람에게만 보내면 돼요.";
+  },
+  exportData() {
+    const blob = new Blob([JSON.stringify(S, null, 1)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "han-georum-board.json"; a.click();
+  }
+};
+
+function todayPool() {
+  const open = S.tasks.filter(t => t.status === "open");
+  const a = open.filter(t => t.today && t.prio === "A");
+  const b = open.filter(t => t.today && t.prio !== "A");
+  const rest = open.filter(t => !t.today && t.prio === "A");
+  return a.concat(b, rest).slice(0, 3);
+}
+
+/* ---------- renderers ---------- */
+function cueTemplates(id) {
+  const opts = ["아침 먹은 뒤에", "9시 알람이 울리면", "점심 먹고 나서", "집에 오자마자"];
+  return '<div class="tmpl">' + opts.map(o => '<button type="button" onclick="A.setCue(\'' + id + '\',\'' + o + '\')">' + o + "</button>").join("") + "</div>";
+}
+
+function editForm(t) {
+  const rwOpts = '<option value="">보상 없음</option>' + S.rewards.map(r => '<option value="' + r.id + '"' + (t.rewardId === r.id ? " selected" : "") + ">" + esc(r.name) + "</option>").join("");
+  return '<details class="edit"><summary>자세히 · 수정</summary>' +
+    '<label class="fl" for="f-title-' + t.id + '">할 일</label><input type="text" id="f-title-' + t.id + '" value="' + esc(t.title) + '">' +
+    '<label class="fl" for="f-first-' + t.id + '">첫 10분에 할 물리적 행동</label><input type="text" id="f-first-' + t.id + '" value="' + esc(t.firstStep) + '" placeholder="문서 열고 제목만 쓰기">' +
+    '<label class="fl" for="f-cue-' + t.id + '">언제 시작할까요 (신호)</label><input type="text" id="f-cue-' + t.id + '" value="' + esc(t.cue) + '" placeholder="아침 먹은 뒤에">' + cueTemplates(t.id) +
+    '<label class="fl" for="f-why-' + t.id + '">이 일이 이어지는 곳 (한 줄)</label><input type="text" id="f-why-' + t.id + '" value="' + esc(t.why) + '" placeholder="포트폴리오 완성 → 캐나다 취업">' +
+    '<label class="fl" for="f-obs-' + t.id + '">늘 걸리는 것</label><input type="text" id="f-obs-' + t.id + '" value="' + esc(t.obstacle) + '" placeholder="폰을 먼저 잡음">' +
+    '<label class="fl" for="f-resume-' + t.id + '">멈췄다 돌아오면 뭐부터</label><input type="text" id="f-resume-' + t.id + '" value="' + esc(t.resumePlan) + '" placeholder="마지막 문단 다시 읽기">' +
+    (S.flags.reward ?
+      '<label class="fl" for="f-rw-' + t.id + '">끝내면 받을 보상' + (t.dread ? " — 하기 싫은 일엔 꼭 붙여요" : "") + '</label><select id="f-rw-' + t.id + '">' + rwOpts + "</select>" : "") +
+    '<label class="fl" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-dread-' + t.id + '" style="width:auto"' + (t.dread ? " checked" : "") + "> 하기 싫은 일이에요</label>" +
+    '<label class="fl">쪼개기 — 단계 목록</label>' +
+    '<ul class="steps">' + (t.steps || []).map((s, i) =>
+      '<li class="' + (s.done ? "done" : "") + '"><input type="checkbox" style="width:auto"' + (s.done ? " checked" : "") + ' onchange="A.toggleStep(\'' + t.id + "'," + i + ')" aria-label="단계 완료"> ' + esc(s.text) + "</li>").join("") + "</ul>" +
+    '<div class="row" style="margin-top:6px;"><input type="text" id="step-in-' + t.id + '" placeholder="다음 단계 하나" style="flex:1"><button class="btn sm" onclick="A.addStep(\'' + t.id + '\')">추가</button></div>' +
+    '<div class="row" style="margin-top:14px; justify-content:space-between;">' +
+    '<button class="btn sm primary" onclick="A.saveEdit(\'' + t.id + '\')">저장</button>' +
+    '<button class="btn sm ghost" onclick="A.del(\'' + t.id + '\')">삭제</button></div></details>';
+}
+
+function taskCard(t, opts) {
+  opts = opts || {};
+  const r = rewardOf(t); const ns = nextStep(t);
+  const stepLine = t.firstStep ? '<div class="step-line">첫 10분: ' + esc(t.firstStep) + "</div>"
+    : ns ? '<div class="step-line">다음 한 걸음: ' + esc(ns.text) + "</div>" : "";
+  const suggest = (t.postponed || 0) >= 3 ?
+    '<div class="soft-suggest">이 일을 ' + t.postponed + '번 미뤘어요. 일이 너무 큰 걸 수도 있어요. 첫 걸음만 더 줄여볼까요? <button class="btn sm" style="margin-left:6px" onclick="A.shrinkFirst(\'' + t.id + '\')">첫 걸음 줄이기</button></div>' : "";
+  return '<div class="card" data-card="' + t.id + '">' +
+    '<div class="row" style="justify-content:space-between; align-items:flex-start;">' +
+    '<div style="flex:1; min-width:0;"><span class="tt">' + esc(t.title) + "</span>" +
+    (t.why ? '<div class="sub">→ ' + esc(t.why) + "</div>" : "") + "</div>" +
+    '<span class="chip prio ' + t.prio + '">' + t.prio + "</span></div>" +
+    stepLine +
+    '<div class="row" style="margin-top:10px;">' +
+    (t.cue ? '<span class="sub" style="margin-top:0">' + esc(t.cue) + "</span>" : "") +
+    (r && S.flags.reward ? '<span class="chip rw">끝내면: ' + esc(r.name) + "</span>" : "") + "</div>" +
+    '<div class="row" style="margin-top:10px;">' +
+    '<button class="btn sm primary" onclick="A.start(\'' + t.id + '\')">이걸로 시작</button>' +
+    (t.today ? '<button class="btn sm" onclick="A.postpone(\'' + t.id + '\')">오늘 말고 나중에</button>'
+             : '<button class="btn sm" onclick="A.toToday(\'' + t.id + '\')">오늘 하기</button>') +
+    '<span style="flex:1"></span>' +
+    ["A", "B", "C"].map(p => t.prio === p ? "" : '<button class="btn sm ghost" onclick="A.setPrio(\'' + t.id + "','" + p + '\')" aria-label="우선순위 ' + p + '로">' + p + "</button>").join("") +
+    "</div>" + suggest + editForm(t) + "</div>";
+}
+
+function timerSvg() {
+  if (!S.timer) return "";
+  const total = S.timer.min * 60000;
+  const left = Math.max(0, total - (now() - S.timer.startTs));
+  const frac = total ? left / total : 0;
+  const C = 2 * Math.PI * 70;
+  const mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000);
+  return '<div class="timerbox"><svg viewBox="0 0 170 170" role="img" aria-label="남은 시간 ' + mm + "분 " + ss + '초">' +
+    '<circle cx="85" cy="85" r="70" fill="none" stroke="var(--hairline)" stroke-width="12"/>' +
+    '<circle cx="85" cy="85" r="70" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + (C * (1 - frac)) + '" transform="rotate(-90 85 85)"/>' +
+    '<text x="85" y="82" text-anchor="middle" class="timernum" font-size="30" font-weight="700" fill="var(--ink)">' + String(mm).padStart(2, "0") + ":" + String(ss).padStart(2, "0") + "</text>" +
+    '<text x="85" y="104" text-anchor="middle" font-size="11" fill="var(--muted)">' + S.timer.min + "분 중</text></svg></div>" +
+    '<div class="tchips">' + [15, 25, 45, 90].map(m => '<button class="' + (S.timer.min === m ? "on" : "") + '" onclick="A.setTimerMin(' + m + ')">' + m + "분</button>").join("") +
+    '<button onclick="A.extendTimer()">+15분 계속</button></div>' +
+    (left <= 0 ? '<p class="sub" style="text-align:center; margin-top:6px;">시간이 다 됐어요. 이어가도 되고, 여기서 마쳐도 돼요.</p>' : "");
+}
+
+function renderNow() {
+  let h = "";
+  if (showReentry) {
+    h += '<div class="notice">며칠 만이에요. 잘 돌아왔어요.<br>지난 계획은 정리하고, 오늘부터 다시 시작하면 돼요. 그동안 일은 기록에 그대로 남아 있어요.' +
+      '<div class="row"><button class="btn sm primary" onclick="A.reentryReset()">정리하고 오늘 시작</button>' +
+      '<button class="btn sm ghost" onclick="A.dismissReentry()">그냥 이어서 볼게요</button></div></div>';
+  }
+  const d = doing();
+  if (d) {
+    const r = rewardOf(d);
+    h += '<div class="card focus-card">' +
+      (d.cue ? '<div class="cue">' + esc(d.cue) + "</div>" : "") +
+      '<div class="tt">' + esc(d.title) + "</div>" +
+      (d.why ? '<div class="sub">→ ' + esc(d.why) + "</div>" : "") +
+      (d.resumePlan && d.postponedResume ? '<div class="resume">돌아왔다면: ' + esc(d.resumePlan) + "</div>" : "") +
+      (d.firstStep ? '<div class="first">첫 10분: ' + esc(d.firstStep) + "</div>" : "") +
+      (S.flags.timer ? timerSvg() : "") +
+      (r && S.flags.reward ? '<div class="sub" style="margin:8px 0 0"><span class="chip rw">끝내면: ' + esc(r.name) + "</span></div>" : "") +
+      '<div class="row" style="justify-content:center; margin-top:18px;">' +
+      '<button class="btn primary" onclick="A.complete(\'' + d.id + '\')">끝냈어요</button>' +
+      '<button class="btn" onclick="openPauseSheet(\'' + d.id + '\')">잠깐 멈춤</button>' +
+      '<button class="btn ghost" onclick="A.putDown(\'' + d.id + '\')">오늘은 여기까지</button>' +
+      "</div></div>";
+    return h;
+  }
+  h += '<div class="capture"><input type="text" id="cap-now" placeholder="머릿속에 있는 일, 한 줄로 내려놓기" onkeydown="if(event.key===\'Enter\')A.quickAdd(\'cap-now\')">' +
+    '<button class="btn" onclick="A.quickAdd(\'cap-now\')">담기</button></div>';
+  const pool = todayPool();
+  if (!pool.length) {
+    h += '<div class="card"><p class="empty">지금 고를 일이 없어요.<br>위에 한 줄만 적으면 그게 오늘의 전부여도 충분해요.</p></div>';
+  } else {
+    h += '<h2 class="sec">오늘 뭐부터 할까요? — 딱 하나만 고르면 돼요</h2>';
+    pool.forEach(t => { h += taskCard(t); });
+    if (pool.length > 1) h += '<div style="text-align:center; margin-top:4px;"><button class="btn" onclick="A.pickRandom()">아무거나 골라줘</button></div>';
+  }
+  const hidden = S.tasks.filter(t => t.status === "open").length - pool.length;
+  if (hidden > 0) h += '<p class="sub" style="text-align:center; margin-top:14px;">나머지 ' + hidden + '개는 <a href="#" onclick="A.switchView(\'tasks\');return false;">할 일</a>에 잘 있어요. 지금은 잊어도 돼요.</p>';
+  return h;
+}
+
+function renderTasks() {
+  let h = '<div class="capture"><input type="text" id="cap-task" placeholder="새 할 일 한 줄" onkeydown="if(event.key===\'Enter\')A.quickAdd(\'cap-task\')">' +
+    '<button class="btn" onclick="A.quickAdd(\'cap-task\')">담기</button></div>';
+  const open = S.tasks.filter(t => t.status !== "done");
+  if (!open.length) return h + '<div class="card"><p class="empty">리스트가 비어 있어요. 하나면 충분해요.</p></div>';
+  const a = open.filter(t => t.prio === "A"), b = open.filter(t => t.prio === "B"), c = open.filter(t => t.prio === "C");
+  if (a.length) { h += '<h2 class="sec">A — 지금 중요한 것</h2>'; a.forEach(t => h += taskCard(t)); }
+  if (b.length) {
+    h += '<details' + (a.length ? "" : " open") + '><summary class="sec" style="cursor:pointer; display:block;">B — 다음 (' + b.length + ")</summary>";
+    b.forEach(t => h += taskCard(t)); h += "</details>";
+  }
+  if (c.length) {
+    h += '<details><summary class="sec" style="cursor:pointer; display:block;">C — 언젠가 (' + c.length + ")</summary>";
+    c.forEach(t => h += taskCard(t)); h += "</details>";
+  }
+  return h;
+}
+
+function renderLog() {
+  const st = thisWeek(S.ledger.filter(e => e.type === "start")).length;
+  const dn = thisWeek(S.ledger.filter(e => e.type === "done")).length;
+  let h = '<div class="stat-row">' +
+    '<div class="stat"><b>' + st + '</b><span>이번 주 시작</span></div>' +
+    '<div class="stat"><b>' + dn + '</b><span>이번 주 완료</span></div></div>' +
+    '<p class="sub" style="margin:0 4px 14px;">시작한 것도 성과예요. 두 숫자 다 매주 월요일에 새로 세요 — 깨질 스트릭은 없어요.</p>';
+  h += '<div class="row" style="margin-bottom:14px;"><button class="btn sm" onclick="A.copyWeek()">주간 요약 복사</button><span class="sub" id="copy-note" style="margin-top:0"></span></div>';
+
+  if (S.flags.review) {
+    const lastRv = S.reviews[0];
+    const due = !lastRv || (now() - lastRv.ts) > 6 * DAY;
+    if (due) {
+      const openA = S.tasks.filter(t => t.status === "open");
+      h += '<div class="card"><span class="tt" style="font-size:15px;">3분 돌아보기</span>' +
+        '<p class="sub">건너뛰어도 아무 일도 일어나지 않아요.</p>' +
+        '<label class="fl">이번 주 실행, 어땠나요?</label><div class="tmpl">' +
+        [1, 2, 3, 4, 5].map(n => '<label style="cursor:pointer"><input type="radio" name="rv-feel" value="' + n + '" style="width:auto"> ' + n + "</label>").join(" ") + "</div>" +
+        '<label class="fl">어떤 도구가 도움이 됐나요?</label><div class="tmpl">' +
+        ["쪼개기", "타이머", "보상", "언제-신호", "골라줘"].map(x => '<label style="cursor:pointer"><input type="checkbox" name="rv-tool" value="' + x + '" style="width:auto"> ' + x + "</label>").join(" ") + "</div>" +
+        (openA.length ? '<label class="fl" for="rv-next">다음 주에 제일 중요한 것 하나</label><select id="rv-next"><option value="">고르지 않아도 돼요</option>' +
+          openA.map(t => '<option value="' + t.id + '">' + esc(t.title) + "</option>").join("") + "</select>" : "") +
+        '<div class="row" style="margin-top:12px;"><button class="btn sm primary" onclick="A.saveReview()">저장</button></div></div>';
+    } else {
+      h += '<p class="sub" style="margin:0 4px 14px;">다음 돌아보기는 ' + fmtTime(lastRv.ts + 7 * DAY) + " 이후에 열려요.</p>";
+    }
+  }
+
+  h += '<h2 class="sec">장부 — 지워지지 않아요</h2>';
+  if (!S.ledger.length) h += '<div class="card"><p class="empty">아직 기록이 없어요. 첫 시작이 첫 줄이 돼요.</p></div>';
+  else {
+    const label = { start: "시작", done: "완료", pause: "멈춤", reset: "오늘부터 다시" };
+    h += '<div class="card" style="padding:6px 16px;">' + S.ledger.slice(0, 60).map(e =>
+      '<div class="ledger-item"><span>' +
+      '<span class="chip ' + (e.type === "done" ? "prio A" : "prio") + '" style="margin-right:8px;">' + label[e.type] + "</span>" + esc(e.title || "") +
+      (e.type === "done" && e.actualMin ? ' <span class="sub" style="margin:0">— 예상 ' + (e.estMin || "?") + "분, 실제 " + e.actualMin + "분</span>" : "") +
+      '</span><span class="when">' + fmtTime(e.ts) + "</span></div>").join("") + "</div>";
+  }
+  if (S.claims.length) {
+    h += '<h2 class="sec">받은 보상</h2><div class="card" style="padding:6px 16px;">' +
+      S.claims.slice(0, 20).map(c => '<div class="ledger-item"><span>' + esc(c.rewardName) + ' <span class="sub" style="margin:0">— ' + esc(c.taskTitle) + '</span></span><span class="when">' + fmtTime(c.ts) + "</span></div>").join("") + "</div>";
+  }
+  return h;
+}
+
+function renderRewards() {
+  let h = '<p class="sub" style="margin:0 4px 12px;">완료한 순간 바로 받을 수 있는 진짜 보상이 좋아요. 커피 한 잔, 영상 한 편, 산책 10분 같은 것. 점수나 배지가 아니라, 나에게 실제로 좋은 것.</p>';
+  h += '<div class="card"><div class="row"><input type="text" id="rw-name" placeholder="새 보상 (예: 좋아하는 노래 3곡)" style="flex:1" onkeydown="if(event.key===\'Enter\')A.addReward()">' +
+    '<select id="rw-size" style="width:auto"><option>작음</option><option>큼</option></select>' +
+    '<button class="btn sm" onclick="A.addReward()">추가</button></div></div>';
+  if (S.rewards.length) {
+    h += '<h2 class="sec">내 보상 목록</h2>';
+    S.rewards.forEach(r => {
+      h += '<div class="card"><div class="row" style="justify-content:space-between;">' +
+        '<span><span class="tt" style="font-size:15px;">' + esc(r.name) + '</span> <span class="chip rw">' + r.size + "</span></span>" +
+        '<button class="btn sm ghost" onclick="A.delReward(\'' + r.id + '\')">삭제</button></div></div>';
+    });
+  }
+  h += '<p class="sub" style="margin:14px 4px 0;">보상은 할 일을 만들 때 붙여요. 특히 "하기 싫은 일" 표시가 있는 일에는 큰 보상을 붙이는 게 좋아요. 보상 받기는 완료 화면에서만 눌려요 — 나와의 약속이 지켜지도록.</p>';
+  return h;
+}
+
+/* ---------- evidence view (작업 화면과 분리, 원문 인용 포함) ---------- */
+const EVIDENCE = [
+  { f: "리스트가 하나뿐인 이유", p: "성인 ADHD CBT의 최대 모듈은 '캘린더+단일 리스트' 시스템 훈련. 앱별·프로젝트별 분리는 시스템 붕괴의 주원인.", c: "Safren et al. 2010, JAMA (RCT, N=86, 반응률 67% vs 33%) · Knouse & Safren 2010 (narrative review)", lvl: "RCT" },
+  { f: "'첫 10분'과 쪼개기", p: "압도적 과제의 단계 분해(task dismantling)는 활성 대조군을 이긴 두 RCT 프로토콜 공통 매뉴얼. 보드엔 다음 한 걸음만 노출.", c: "Safren et al. 2010, JAMA · Solanto et al. 2010, Am J Psychiatry (RCT, N=88, 42.2% vs 12%)", lvl: "RCT" },
+  { f: "완료 순간 보상이 뜨는 이유", p: "ADHD는 미래 보상 가치가 가파르게 하락(지연 할인, d=0.43, 성인 동일). 보상은 완료와 동시에.", c: "Jackson & MacKillop 2016 (meta-analysis, N=3,913) · Marx et al. 2021, J Atten Disord (meta-analysis)", lvl: "메타분석" },
+  { f: "포인트가 아니라 진짜 보상인 이유", p: "실제 보상이 걸리면 즉시 보상 선호가 약 2배. 추상·가상 보상은 동기가 약함. 작은 보상은 무효, 충분히 큰 보상만 효과(아동 실험).", c: "Marx et al. 2021 (meta-analysis) · Dovis et al. 2012, J Abnorm Child Psychol (아동, 10유로만 효과)", lvl: "메타분석" },
+  { f: "'언제 시작' 신호 칸", p: "if-then 실행 의도는 시작을 자동화(d=.65, 임상 표본 d+=0.99). 성인 ADHD 직접 시험은 아직 없음 — 정직하게 외삽.", c: "Gollwitzer & Sheeran 2006 (meta-analysis, 94건) · Toli et al. 2016 · Gawrilow & Gollwitzer 2008 (ADHD 아동)", lvl: "메타분석" },
+  { f: "탭 한 번의 셀프 체크가 핵심인 이유", p: "자기 기록(self-monitoring) 자체가 개입. 진행을 물리적으로 기록해 보이게 하면 달성률 상승(d+=0.40, 조절변수: 기록·공개).", c: "Reid, Trout & Schartz 2005 (meta-analysis, 아동 ES>1.0) · Harkin et al. 2016, Psychol Bull (138실험, N=19,951) · Scheithauer & Kelley 2017 (대학생 RCT)", lvl: "메타분석" },
+  { f: "줄어드는 타이머", p: "시간 지각 결함은 측정 가능한 특성. 시간은 머리가 아니라 화면에 — 보이는 타이머는 부주의 행동을 줄임(수행 향상은 미확인). 예상 vs 실제를 판단 없이 데이터로.", c: "Zheng et al. 2022 (meta-analysis) · Hallez & Vallier 2025 (통제 실험) · Barkley 1997 (이론 기반 처방)", lvl: "메타분석+이론" },
+  { f: "'골라줘'와 3개 메뉴", p: "스스로 고르면 참여가 오르고 문제 행동이 줌(개인차 있음). 앱이 명령하지 않고 선택지를 좁혀줌. 모든 규칙은 사용자가 수정 가능.", c: "Powell & Nelson 1997, JABA · Dunlap et al. 1994, JABA (단일사례 실험) · Morsink et al. 2022 (narrative review)", lvl: "소규모 실험" },
+  { f: "빨간 연체가 없는 이유", p: "정서 조절 어려움은 성인 34–70%. 비판·수치심은 동기가 아니라 회피(숨기, 포기)를 낳음. 놓친 일은 중립 표현 + 벌점 없는 이동.", c: "Soler-Gutiérrez et al. 2023, PLOS ONE (systematic review, 22건) · Beaton et al. 2022, PLOS ONE (질적 연구, N=162)", lvl: "체계적 리뷰" },
+  { f: "'며칠 만이에요' 복귀 화면", p: "자기 주도 디지털 프로그램에서 이탈은 표준(만족 사용자도 완료율 29%, 2주 내 36% 이탈). 돌아오는 문을 넓게, 죄책감 없이.", c: "Kenter et al. 2023, Internet Interventions (RCT, d=0.70) · Knouse et al. 2022, PLOS Digital Health (Inflow 관찰 연구)", lvl: "RCT+관찰" },
+  { f: "스트릭이 없는 이유", p: "깨지는 스트릭·벌점은 강박 사용 루프와 정서 반응 등 문서화된 위해와 닿아 있음. 주간 카운트는 매주 새로 시작.", c: "Gabarron et al. 2025 (umbrella review — 26개 리뷰 중 8개만 위해 보고, 안전성 검증 자체가 빈약)", lvl: "엄브렐라 리뷰" },
+  { f: "25/5 뽀모도로를 강제하지 않는 이유", p: "몰입까지 20–45분 걸릴 수 있어 25분 컷이 탄력을 끊는다는 건 실무 합의 수준. 길이는 사용자 실험에 열어둠(기본 45분).", c: "Kreider et al. 2019 (질적 근거) — gray/clinical", lvl: "gray" }
+];
+const LIMITS = [
+  "아동 근거의 성인 적용: 자기 모니터링 대형 효과, 보상 역치, if-then 실험, 시각 타이머 실험은 대부분 아동·청소년 연구예요. 성인 직접 근거는 Safren 2010, Solanto 2010, Kenter 2023, Scheithauer & Kelley 2017 정도.",
+  "이론 수준: Barkley(1997)의 '수행 시점에 시간·동기 외부화'는 이론에서 나온 임상 처방이지 개별 검증된 전술이 아니에요.",
+  "자기 운영의 공백: 토큰 이코노미의 강한 근거(Fabiano 2009)는 부모·교사·임상가가 집행한 조건. '혼자 굴리는 보상'은 합리적 외삽이라, 완료 화면을 거쳐야 보상을 받는 사전 약속 장치를 넣었어요.",
+  "효과의 눈금: Cochrane 2018은 성인 ADHD CBT를 'low-quality evidence, may be beneficial, short term'으로 평가해요. 이 보드도 같은 눈금 위에 있어요 — 도구이지 치료가 아니에요.",
+  "자기 보고의 한계: Wennberg 2017에서 가장 큰 효과는 관찰자 평가였고 본인 평가는 움직이지 않았어요. 그래서 이 보드는 느낌 대신 시작/완료/시간이라는 행동 흔적을 쌓아요."
+];
+
+function renderEvidence() {
+  let h = '<p class="sub" style="margin:0 4px 14px;">이 보드의 모든 기능은 이름 붙은 행동치료 메커니즘에서 출발했어요. 여기 없는 기능은 근거가 없어서 뺀 거예요.</p>';
+  EVIDENCE.forEach(e => {
+    h += '<div class="evi-card"><h4>' + e.f + "</h4><p>" + e.p + "</p>" +
+      '<div class="cite"><span class="lvl' + (e.lvl === "gray" ? " gray" : "") + '">' + (e.lvl === "gray" ? "실무 관행" : e.lvl) + "</span>" + e.c + "</div></div>";
+  });
+  h += '<h2 class="sec">근거의 한계 — 정직하게</h2>';
+  LIMITS.forEach(l => { h += '<div class="evi-card"><p style="margin:0">' + l + "</p></div>"; });
+  h += '<h2 class="sec">기능 끄기 — 도움이 안 되면 꺼요</h2><div class="card">' +
+    [["timer", "타이머"], ["reward", "보상"], ["review", "주간 돌아보기"]].map(x =>
+      '<div class="toggle-row"><span>' + x[1] + '</span><span class="switch"><input type="checkbox"' + (S.flags[x[0]] ? " checked" : "") + ' onchange="A.setFlag(\'' + x[0] + '\', this.checked)" aria-label="' + x[1] + ' 켜기 끄기"><span class="knob"></span></span></div>').join("") +
+    '</div><p class="sub" style="margin:10px 4px 0;">2주쯤 써보고 장부에 흔적을 남기지 못한 기능은 끄는 게 맞아요. 판단 기준은 마케팅이 아니라 내 기록이에요.</p>';
+  return h;
+}
+
+/* ---------- sheets ---------- */
+function openDoneSheet(t, actual) {
+  const r = rewardOf(t);
+  const est = t.estMin;
+  const timeLine = actual ? "예상 " + (est || "?") + "분 → 실제 " + actual + "분. 데이터가 하나 쌓였어요." : "";
+  $("#sheet-root").innerHTML = '<div class="sheet-bg" onclick="if(event.target===this)closeSheet()"><div class="sheet" role="dialog" aria-label="완료">' +
+    '<div class="bigcheck"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></div>' +
+    "<h3>끝. 장부에 적었어요.</h3>" +
+    '<p class="fact">' + esc(t.title) + "</p>" +
+    (timeLine ? '<p class="fact">' + timeLine + "</p>" : "") +
+    (r && S.flags.reward ?
+      '<div class="reward-card"><div class="rs">약속했던 보상</div><div class="rn">' + esc(r.name) + '</div>' +
+      '<button class="btn reward" style="margin-top:10px;" onclick="A.claimReward(\'' + t.id + '\')">지금 받기</button></div>' : "") +
+    '<div class="row" style="justify-content:center; margin-top:16px;">' +
+    '<button class="btn" onclick="closeSheet()">다음</button></div></div></div>';
+  const btn = document.querySelector("#sheet-root .btn"); if (btn) btn.focus();
+}
+function openPauseSheet(id) {
+  const t = task(id);
+  $("#sheet-root").innerHTML = '<div class="sheet-bg" onclick="if(event.target===this)closeSheet()"><div class="sheet" role="dialog" aria-label="잠깐 멈춤" style="text-align:left;">' +
+    '<h3 style="text-align:center;">잠깐 멈출게요</h3>' +
+    '<p class="fact" style="text-align:center;">멈추는 건 실패가 아니에요. 돌아올 문만 정해두면 돼요.</p>' +
+    '<label class="fl" for="resume-input">돌아오면 뭐부터 할까요?</label>' +
+    '<input type="text" id="resume-input" value="' + esc(t.resumePlan) + '" placeholder="마지막 문단 다시 읽기">' +
+    '<div class="row" style="justify-content:center; margin-top:16px;">' +
+    '<button class="btn primary" onclick="pauseWithPlan(\'' + id + '\')">저장하고 멈춤</button>' +
+    '<button class="btn ghost" onclick="closeSheet()">계속할래요</button></div></div></div>';
+  $("#resume-input").focus();
+}
+function pauseWithPlan(id) {
+  const t = task(id); const el = $("#resume-input");
+  if (el && el.value.trim()) t.resumePlan = el.value.trim();
+  t.postponedResume = true;
+  A.putDown(id); closeSheet();
+}
+function closeSheet() { $("#sheet-root").innerHTML = ""; }
+
+/* ---------- shell ---------- */
+function render() {
+  const map = { now: renderNow, tasks: renderTasks, log: renderLog, rewards: renderRewards, evidence: renderEvidence };
+  $("#app").innerHTML = (map[view] || renderNow)();
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === view)));
+  const needTick = S.timer && view === "now";
+  if (needTick && !tickHandle) tickHandle = setInterval(() => { if (S.timer && view === "now") render(); }, 1000);
+  if (!needTick && tickHandle) { clearInterval(tickHandle); tickHandle = null; }
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => A.switchView(b.dataset.view)));
+$("#evi-link").addEventListener("click", e => { e.preventDefault(); A.switchView("evidence"); });
+$("#export-link").addEventListener("click", e => { e.preventDefault(); A.exportData(); });
+const dl = new Date();
+$("#dateline").textContent = dl.getFullYear() + "." + String(dl.getMonth() + 1).padStart(2, "0") + "." + String(dl.getDate()).padStart(2, "0");
+window.A = A; window.openPauseSheet = openPauseSheet; window.pauseWithPlan = pauseWithPlan; window.closeSheet = closeSheet;
+render();
+</script>
+</body>
+</html>
